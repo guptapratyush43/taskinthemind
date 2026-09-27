@@ -17,7 +17,7 @@ Android may show a Play Protect "unknown app" notice because the app isn't from 
 
 ## Privacy
 
-No accounts, ads or analytics. Everything stays on your phone unless you turn on Drive backup, which stores one file in *your own* Drive's hidden app folder. See the [privacy policy](https://guptapratyush43.github.io/task-in-the-mind/privacy.html).
+No accounts, ads or analytics. Everything stays on your phone unless you turn on Drive backup, which stores one file in *your own* Drive's hidden app folder. See the [privacy policy](https://guptapratyush43.github.io/taskinthemind/privacy.html).
 
 ## Build
 
