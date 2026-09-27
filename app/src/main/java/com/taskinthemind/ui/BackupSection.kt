@@ -49,7 +49,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import com.taskinthemind.AppScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -77,13 +77,12 @@ fun BackupSection() {
     val scheme = MaterialTheme.colorScheme
     val status = LocalStatusColors.current
     val state by BackupManager.state.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
-    var showNotice by rememberSaveable { mutableStateOf(false) }
+    val scope = AppScope
     var offer by remember { mutableStateOf<BackupManager.RemoteInfo?>(null) }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     var menu by remember { mutableStateOf(false) }
 
-    fun toast(msg: String) = Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+    fun toast(msg: String) { if (msg.isNotBlank()) Toast.makeText(context.applicationContext, msg, Toast.LENGTH_SHORT).show() }
 
     fun afterSignIn(token: String) {
         scope.launch {
@@ -93,7 +92,7 @@ fun BackupSection() {
                     offer = remote // a phone that is new or reset: offer to bring everything back
                 } else {
                     BackupManager.backupNow()
-                    toast("You're in. First backup done ✨")
+                    toast("Signed in. First backup done")
                 }
             } catch (e: Throwable) {
                 toast(BackupManager.friendly(e))
@@ -142,13 +141,14 @@ fun BackupSection() {
                 color = scheme.onSurfaceVariant
             )
             Spacer(Modifier.height(14.dp))
-            PrimaryButton("Sign in with Google", null, onClick = { showNotice = true }, modifier = Modifier.fillMaxWidth())
+            PrimaryButton("Sign in with Google", null, onClick = { signIn() }, modifier = Modifier.fillMaxWidth())
         } else {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconBubble(Icons.Outlined.CloudDone, size = 44.dp, iconSize = 22.dp)
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     Text(state.email!!, style = MaterialTheme.typography.titleSmall, color = scheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Spacer(Modifier.height(4.dp))
                     val line = state.busy
                         ?: if (state.lastBackupAt > 0) "Last backup · ${Fmt.day(state.lastBackupAt)}, ${Fmt.time(state.lastBackupAt)}" else "No backup yet"
                     Text(line, style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
@@ -190,7 +190,7 @@ fun BackupSection() {
                 CardAction(Icons.Outlined.CloudUpload, "Back up now", Modifier.weight(1f), enabled = state.busy == null) {
                     scope.launch {
                         runCatching { BackupManager.backupNow() }
-                            .onSuccess { toast("Backed up ✨") }
+                            .onSuccess { toast("Backed up") }
                             .onFailure { toast(BackupManager.friendly(it)) }
                     }
                 }
@@ -212,29 +212,6 @@ fun BackupSection() {
         }
     }
 
-    if (showNotice) {
-        WarmDialog(
-            icon = Icons.Outlined.CloudUpload,
-            accent = scheme.primary,
-            title = "Quick vibe check",
-            confirmLabel = "Bet, sign me in",
-            onConfirm = { showNotice = false; signIn() },
-            dismissLabel = "Nah, later",
-            onDismiss = { showNotice = false }
-        ) {
-            // Same icon-and-text rows as the rest of the app, just with more personality.
-            WarmCard(padding = 16.dp) {
-                Feature(Icons.Outlined.Visibility, "Google might say “unverified app”", "That's just us being indie, not sus. Tap Advanced, then Go to Task in the Mind.")
-                NoticeGap()
-                Feature(Icons.Outlined.Lock, "We get one tiny secret locker", "Can't see your pics, docs, or that folder called “misc final FINAL (2)”.")
-                NoticeGap()
-                Feature(Icons.Outlined.VisibilityOff, "Your backup stays hidden", "Zero clutter in My Drive. Curious? Drive, Settings, Manage apps.")
-                NoticeGap()
-                Feature(Icons.Outlined.Wifi, "Internet is only for backup", "Alarms still ring offline, no cap.")
-            }
-        }
-    }
-
     offer?.let { info ->
         WarmDialog(
             icon = Icons.Outlined.Restore,
@@ -245,7 +222,7 @@ fun BackupSection() {
                 offer = null
                 scope.launch {
                     runCatching { BackupManager.restore() }
-                        .onSuccess { toast("Restored $it ${if (it == 1) "task" else "tasks"}. Welcome back ✨") }
+                        .onSuccess { toast("Restored $it ${if (it == 1) "task" else "tasks"}. Welcome back") }
                         .onFailure { toast(BackupManager.friendly(it)) }
                 }
             },
@@ -298,12 +275,6 @@ private fun CardAction(icon: ImageVector, label: String, modifier: Modifier, ena
     }
 }
 
-@Composable
-private fun NoticeGap() {
-    Spacer(Modifier.height(12.dp))
-    HairLine()
-    Spacer(Modifier.height(12.dp))
-}
 
 /** The app's standard dialog: icon bubble, serif title, content, then two wide buttons. */
 @Composable

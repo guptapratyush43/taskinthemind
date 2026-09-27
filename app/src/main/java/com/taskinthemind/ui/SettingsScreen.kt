@@ -15,6 +15,7 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,6 +34,7 @@ import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.OpenInFull
 import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material.icons.outlined.Vibration
@@ -102,6 +104,19 @@ object AlarmPermissions {
         }
     }
 
+    /** Xiaomi-family phones hide a separate "Autostart" switch that blocks boot/update wake-ups. */
+    fun hasAutostart() = Build.MANUFACTURER.lowercase() in setOf("xiaomi", "redmi", "poco")
+
+    fun openAutostart(c: Context) {
+        val attempts = listOf(
+            Intent().setClassName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"),
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${c.packageName}"))
+        )
+        for (intent in attempts) {
+            try { c.startActivity(intent); return } catch (_: Exception) { }
+        }
+    }
+
     fun missingCritical(c: Context) = !notifications(c) || !fullScreen(c) || !exact(c)
 }
 
@@ -139,6 +154,10 @@ fun SettingsScreen(onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
+            SectionLabel("Backup")
+            BackupSection()
+
+            Spacer(Modifier.height(24.dp))
             SectionLabel("Alarm sound")
             WarmCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -176,21 +195,19 @@ fun SettingsScreen(onBack: () -> Unit) {
                         fileTone.launch(arrayOf("audio/*"))
                     }
                 }
-            }
-
-            Spacer(Modifier.height(24.dp))
-            SectionLabel("Backup")
-            BackupSection()
-
-            Spacer(Modifier.height(24.dp))
-            SectionLabel("While ringing")
-            WarmCard(padding = 14.dp) {
+                Spacer(Modifier.height(6.dp))
+                HairLine()
+                Spacer(Modifier.height(14.dp))
+                // Vibrate lives with the sound it accompanies; its icon sits in the same
+                // 44dp column as the tone bubble so both rows' text lines up.
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Outlined.Vibration, contentDescription = null, tint = scheme.primary, modifier = Modifier.size(20.dp))
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.width(44.dp)) {
+                        Icon(Icons.Outlined.Vibration, contentDescription = null, tint = scheme.primary, modifier = Modifier.size(22.dp))
+                    }
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f)) {
                         Text("Vibrate", style = MaterialTheme.typography.titleSmall, color = scheme.onSurface)
-                        Text("Pulse along with the tone", style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
+                        RowBody("Pulse along with the tone")
                     }
                     Switch(
                         checked = settings.vibrate,
@@ -212,6 +229,10 @@ fun SettingsScreen(onBack: () -> Unit) {
                     })
                     if (Build.VERSION.SDK_INT >= 31) add(Perm(Icons.Outlined.Schedule, "Exact timing", "Rings on the minute, not roughly", AlarmPermissions.exact(context)) {
                         context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, pkg))
+                    })
+                    if (AlarmPermissions.hasAutostart()) add(Perm(Icons.Outlined.RestartAlt, "Autostart", "Lets alarms come back after a restart or update", granted = true,
+                        alwaysShow = true, grantedBody = "Turn on so alarms come back after a restart or update") {
+                        AlarmPermissions.openAutostart(context)
                     })
                     add(Perm(BatteryBolt, "Unrestricted battery", "Optional; helps on aggressive phones", AlarmPermissions.battery(context),
                         alwaysShow = true, grantedBody = "On, so the phone never delays your alarms") {
@@ -260,7 +281,7 @@ private fun PermissionRow(icon: ImageVector, title: String, body: String, grante
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.titleSmall, color = scheme.onSurface)
-            Text(body, style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
+            RowBody(body)
         }
         TextButton(onClick = onFix) {
             Text(if (granted) "Manage" else "Allow", color = scheme.primary, style = MaterialTheme.typography.labelLarge)

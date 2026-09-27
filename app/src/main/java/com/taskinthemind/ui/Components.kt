@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -150,6 +151,17 @@ fun PillToggle(options: List<String>, selected: Int, onSelect: (Int) -> Unit, mo
             }
         }
     }
+}
+
+/** Grey description under a row title, spaced so two-line text reads evenly. */
+@Composable
+fun RowBody(text: String) {
+    Spacer(Modifier.height(2.dp))
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall.copy(lineHeight = 17.sp),
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
 }
 
 @Composable

@@ -14,8 +14,8 @@ android {
         applicationId = "com.taskinthemind"
         minSdk = 26
         targetSdk = 34
-        versionCode = 16
-        versionName = "2.5"
+        versionCode = 29
+        versionName = "3.8"
     }
 
     // Release key lives in signing/ (git-ignored). Without it, release builds fall back to unsigned.

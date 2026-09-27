@@ -75,6 +75,7 @@ fun AppRoot(screenFlow: MutableStateFlow<Screen>, onRescheduled: (fromAlarm: Boo
                     onSelectList = { selectedList = it },
                     onCreateList = { name -> selectedList = TaskRepository.createList(name) },
                     onRenameList = { id, name -> TaskRepository.renameList(id, name) },
+                    onReorderLists = { ids -> TaskRepository.reorderLists(ids) },
                     onDeleteList = { id -> TaskRepository.deleteList(id); if (selectedList == id) selectedList = null; toast("List deleted") },
                     onOpenTask = { screenFlow.value = Screen.Editor(it.id) },
                     onToggleDone = { toggleDone(it.id) },

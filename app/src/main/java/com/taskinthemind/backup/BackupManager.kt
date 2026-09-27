@@ -226,6 +226,8 @@ object BackupManager {
                     block(Drive(DriveAuth.silentToken(app) ?: throw NeedsSignInException()))
                 }
             }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e // stopped on purpose; not an error worth showing
         } catch (e: Throwable) {
             val msg = friendly(e)
             prefs.edit().putString("error", msg).apply()
@@ -236,7 +238,9 @@ object BackupManager {
         }
     }
 
+    /** A short message for the user; empty for a cancelled job, which shows nothing. */
     fun friendly(e: Throwable): String = when (e) {
+        is kotlinx.coroutines.CancellationException -> ""
         is NeedsSignInException -> e.message!!
         is HttpException -> if (e.code == 403) "Drive said no (403). Check this account is a test user." else "Drive hiccup (${e.code}). Try again."
         is java.net.UnknownHostException, is java.net.SocketTimeoutException -> "No internet right now. We'll retry."

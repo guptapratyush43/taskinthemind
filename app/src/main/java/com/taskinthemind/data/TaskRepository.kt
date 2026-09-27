@@ -71,6 +71,14 @@ object TaskRepository {
     @Synchronized
     fun renameList(id: Int, name: String) = saveLists(_lists.value.map { if (it.id == id) it.copy(name = name.trim()) else it })
 
+    /** Saves lists in the order given (ids); any list not named keeps its place at the end. */
+    @Synchronized
+    fun reorderLists(ids: List<Int>) {
+        val byId = _lists.value.associateBy { it.id }
+        val ordered = ids.mapNotNull(byId::get)
+        saveLists(ordered + _lists.value.filterNot { it.id in ids })
+    }
+
     /** Removes the list; its tasks stay, back under All tasks. */
     @Synchronized
     fun deleteList(id: Int) {

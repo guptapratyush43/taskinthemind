@@ -101,6 +101,7 @@ fun HomeScreen(
     onCreateList: (String) -> Unit,
     onRenameList: (Int, String) -> Unit,
     onDeleteList: (Int) -> Unit,
+    onReorderLists: (List<Int>) -> Unit,
     onOpenTask: (Task) -> Unit,
     onToggleDone: (Task) -> Unit,
     onDelete: (Task) -> Unit,
@@ -127,12 +128,17 @@ fun HomeScreen(
     val latestLists by rememberUpdatedState(lists)
     val latestSelected by rememberUpdatedState(selectedList)
     val latestOnSelect by rememberUpdatedState(onSelectList)
-    LaunchedEffect(selectedList, lists.size) {
+    var sliding by remember { mutableStateOf(false) }
+    LaunchedEffect(selectedList, lists.map { it.id }) {
         val target = pageOf(selectedList)
-        if (pagerState.currentPage != target) pagerState.animateScrollToPage(target)
+        if (pagerState.currentPage != target) {
+            sliding = true
+            try { pagerState.animateScrollToPage(target) } finally { sliding = false }
+        }
     }
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }.collect { page ->
+            if (sliding) return@collect
             val id = if (page == 0) null else latestLists.getOrNull(page - 1)?.id
             if (id != latestSelected) latestOnSelect(id)
         }
@@ -151,17 +157,20 @@ fun HomeScreen(
                         Spacer(Modifier.height(4.dp))
                         Text("Task in the Mind", style = MaterialTheme.typography.displaySmall, color = scheme.onBackground)
                     }
-                    IconButton(
-                        onClick = onOpenSettings,
+                    // A plain round button: IconButton would force a 48dp minimum and ignore the size.
+                    Box(
+                        contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(46.dp)
+                            .size(40.dp)
+                            .clip(CircleShape)
                             .background(scheme.surface, CircleShape)
                             .border(1.dp, scheme.outline, CircleShape)
+                            .clickable(onClick = onOpenSettings)
                     ) {
-                        Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = scheme.onSurfaceVariant)
+                        Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = scheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                     }
                 }
-        ListTabs(lists, selectedList, onSelectList, onCreateList, onRenameList, onDeleteList)
+        ListTabs(lists, selectedList, onSelectList, onCreateList, onRenameList, onDeleteList, onReorderLists)
         // One page per tab: swipe sideways to move between All tasks and each list.
         HorizontalPager(
             state = pagerState,
@@ -220,20 +229,22 @@ fun HomeScreen(
                     }
                 }
 
-                if (tasks.isEmpty()) {
+                // "A clear mind" belongs to All tasks; an empty list shows its own screen,
+                // even on a fresh install with no tasks anywhere yet.
+                if (pageList == null && tasks.isEmpty()) {
                     item { EmptyState(onRestore = onOpenSettings) }
                 } else if (visible.isEmpty()) {
-                    item { ListEmpty(listNames[pageList] ?: "this list") }
+                    item { ListEmpty(listNames[pageList] ?: "this list", canReorder = lists.size > 1) }
                 }
 
                 val row: @Composable (Task) -> Unit = { t ->
-                    TaskRow(t, now, onOpenTask, onToggleDone, onLongPress = { menuFor = t.id }, tag = if (pageList == null) t.listId?.let(listNames::get) else null) {
+                    TaskRow(t, now, onOpenTask, onToggleDone, onLongPress = { Haptics.press(context); menuFor = t.id }, tag = if (pageList == null) t.listId?.let(listNames::get) else null) {
                         TaskMenu(menuFor == t.id, t.done, onDismiss = { menuFor = null }, onToggleDone = { menuFor = null; onToggleDone(t) }) { menuFor = null; pendingDelete = t }
                     }
                 }
                 upcoming.firstOrNull()?.let { next ->
                     item(key = "next") {
-                        NextUpCard(next, now, onClick = { onOpenTask(next) }, onLongPress = { menuFor = next.id }) {
+                        NextUpCard(next, now, onClick = { onOpenTask(next) }, onLongPress = { Haptics.press(context); menuFor = next.id }) {
                             TaskMenu(menuFor == next.id, next.done, onDismiss = { menuFor = null }, onToggleDone = { menuFor = null; onToggleDone(next) }) { menuFor = null; pendingDelete = next }
                         }
                     }
@@ -439,8 +450,8 @@ private fun TaskMenu(expanded: Boolean, done: Boolean, onDismiss: () -> Unit, on
         )
         HairLine(Modifier.padding(horizontal = 12.dp))
         DropdownMenuItem(
-            text = { Text("Delete task", style = MaterialTheme.typography.labelLarge, color = danger) },
-            leadingIcon = { Icon(Icons.Outlined.DeleteOutline, contentDescription = null, tint = danger) },
+            text = { Text("Delete task", style = MaterialTheme.typography.labelLarge, color = scheme.onSurface) },
+            leadingIcon = { Icon(Icons.Outlined.DeleteOutline, contentDescription = null, tint = scheme.primary) },
             onClick = onDelete
         )
     }

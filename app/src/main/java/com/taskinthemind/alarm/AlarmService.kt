@@ -18,6 +18,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -193,7 +194,15 @@ class AlarmService : Service() {
                 @Suppress("DEPRECATION")
                 getSystemService(Vibrator::class.java)
             }
-            vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 800, 600), 0), attrs)
+            // Full-strength pulse (1s on, 0.5s off) that repeats until the alarm is handled,
+            // flagged as an alarm so the phone gives it alarm priority.
+            val pattern = VibrationEffect.createWaveform(longArrayOf(0, 1000, 500), intArrayOf(0, 255, 0), 0)
+            if (Build.VERSION.SDK_INT >= 33) {
+                vibrator?.vibrate(pattern, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(pattern, attrs)
+            }
         }
     }
 

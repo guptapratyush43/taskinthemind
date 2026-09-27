@@ -28,7 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import com.taskinthemind.AppScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
@@ -45,9 +45,9 @@ import kotlinx.coroutines.launch
 fun AboutCard() {
     val context = LocalContext.current
     val scheme = MaterialTheme.colorScheme
-    val scope = rememberCoroutineScope()
+    val scope = AppScope
     var checking by remember { mutableStateOf(false) }
-    fun toast(msg: String) = Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+    fun toast(msg: String) = Toast.makeText(context.applicationContext, msg, Toast.LENGTH_SHORT).show()
 
     WarmCard(padding = 14.dp) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -55,11 +55,7 @@ fun AboutCard() {
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text("Version ${UpdateManager.currentVersion}", style = MaterialTheme.typography.titleSmall, color = scheme.onSurface)
-                Text(
-                    if (checking) "Checking…" else "New versions show up here automatically",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = scheme.onSurfaceVariant
-                )
+                RowBody(if (checking) "Checking…" else "New versions show up here automatically")
             }
             TextButton(enabled = !checking, onClick = {
                 scope.launch {
@@ -82,7 +78,7 @@ fun AboutCard() {
 fun UpdateDialog(release: UpdateManager.Release) {
     val context = LocalContext.current
     val scheme = MaterialTheme.colorScheme
-    val scope = rememberCoroutineScope()
+    val scope = AppScope
     val download by UpdateManager.download.collectAsStateWithLifecycle()
     val running = download is Download.Running
 
