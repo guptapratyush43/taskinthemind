@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Little round bells, tucked behind the body -->
+    <path android:fillColor="#A85B41"
+        android:pathData="M40.5,33.5a6.5,6.5 0 1,1 0,13a6.5,6.5 0 1,1 0,-13z" />
+    <path android:fillColor="#A85B41"
+        android:pathData="M67.5,33.5a6.5,6.5 0 1,1 0,13a6.5,6.5 0 1,1 0,-13z" />
+    <!-- Tiny feet -->
+    <path android:strokeColor="#A85B41" android:strokeWidth="3.6" android:strokeLineCap="round"
+        android:pathData="M45,70.5l-3,4M63,70.5l3,4" />
+    <!-- Body -->
+    <path android:fillColor="#CC785C"
+        android:pathData="M54,38a17,17 0 1,1 0,34a17,17 0 1,1 0,-34z" />
+    <!-- Face -->
+    <path android:fillColor="#FAF9F5"
+        android:pathData="M54,42.5a12.5,12.5 0 1,1 0,25a12.5,12.5 0 1,1 0,-25z" />
+    <!-- Rosy cheeks -->
+    <path android:fillColor="#F2B8A2"
+        android:pathData="M45.6,59.5a2,2 0 1,1 0,4a2,2 0 1,1 0,-4zM62.4,59.5a2,2 0 1,1 0,4a2,2 0 1,1 0,-4z" />
+    <!-- Hands -->
+    <path android:strokeColor="#CC785C" android:strokeWidth="2.6" android:strokeLineCap="round"
+        android:strokeLineJoin="round" android:pathData="M54,47.5v7.5l4.5,2.8" />
+    <path android:fillColor="#A85B41"
+        android:pathData="M54,53.4a1.6,1.6 0 1,1 0,3.2a1.6,1.6 0 1,1 0,-3.2z" />
+</vector>
