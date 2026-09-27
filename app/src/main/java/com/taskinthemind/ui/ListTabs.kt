@@ -35,6 +35,9 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,18 +79,28 @@ fun ListTabs(
     var menuFor by remember { mutableStateOf<Int?>(null) }
     var naming by remember { mutableStateOf<TaskList?>(null) } // id 0 = a new list
     var deleting by remember { mutableStateOf<TaskList?>(null) }
+    // Where each tab sits, so a swipe can scroll the strip to the active one.
+    val scroll = rememberScrollState()
+    val positions = remember { mutableStateMapOf<Int, Int>() }
+    val margin = with(LocalDensity.current) { 48.dp.roundToPx() }
+    LaunchedEffect(selected) {
+        positions[selected ?: -1]?.let { scroll.animateScrollTo((it - margin).coerceAtLeast(0)) }
+    }
 
     Column(Modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.Bottom,
             modifier = Modifier
                 .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
+                .horizontalScroll(scroll)
                 .padding(horizontal = 10.dp)
         ) {
-            ListTab("All tasks", selected == null, onClick = { onSelect(null) }, onLongClick = null)
+            ListTab(
+                "All tasks", selected == null, onClick = { onSelect(null) }, onLongClick = null,
+                modifier = Modifier.onGloballyPositioned { positions[-1] = it.positionInParent().x.toInt() }
+            )
             lists.forEach { list ->
-                Box {
+                Box(Modifier.onGloballyPositioned { positions[list.id] = it.positionInParent().x.toInt() }) {
                     ListTab(list.name, selected == list.id, onClick = { onSelect(list.id) }, onLongClick = { menuFor = list.id })
                     DropdownMenu(
                         expanded = menuFor == list.id,
@@ -162,13 +175,13 @@ fun ListTabs(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ListTab(name: String, active: Boolean, onClick: () -> Unit, onLongClick: (() -> Unit)?) {
+private fun ListTab(name: String, active: Boolean, onClick: () -> Unit, onLongClick: (() -> Unit)?, modifier: Modifier = Modifier) {
     val scheme = MaterialTheme.colorScheme
     val style = MaterialTheme.typography.titleSmall
     val textWidth = tabTextWidth(name, style)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp))
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(horizontal = 12.dp)

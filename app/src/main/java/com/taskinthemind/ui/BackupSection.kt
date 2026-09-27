@@ -315,10 +315,11 @@ fun WarmDialog(
     onConfirm: () -> Unit,
     dismissLabel: String,
     onDismiss: () -> Unit,
+    onDismissRequest: () -> Unit = onDismiss,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val scheme = MaterialTheme.colorScheme
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier

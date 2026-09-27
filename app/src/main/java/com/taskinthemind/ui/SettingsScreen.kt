@@ -233,6 +233,10 @@ fun SettingsScreen(onBack: () -> Unit) {
             }
 
             Spacer(Modifier.height(24.dp))
+            SectionLabel("About")
+            AboutCard()
+
+            Spacer(Modifier.height(24.dp))
             Footnote("Alarms play on the alarm volume, so they still ring when media is muted.")
             Spacer(Modifier.height(24.dp))
         }

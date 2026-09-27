@@ -3,6 +3,7 @@ package com.taskinthemind
 import android.app.Application
 import com.taskinthemind.alarm.AlarmService
 import com.taskinthemind.backup.BackupManager
+import com.taskinthemind.update.UpdateManager
 import com.taskinthemind.data.AppSettings
 import com.taskinthemind.data.TaskRepository
 
@@ -13,5 +14,6 @@ class TaskApp : Application() {
         AppSettings.init(this)
         AlarmService.createChannel(this)
         BackupManager.init(this)
+        UpdateManager.init(this)
     }
 }

@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.taskinthemind.Screen
 import com.taskinthemind.alarm.TaskActions
 import com.taskinthemind.data.TaskRepository
+import com.taskinthemind.update.UpdateManager
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
@@ -49,6 +50,10 @@ fun AppRoot(screenFlow: MutableStateFlow<Screen>, onRescheduled: (fromAlarm: Boo
     }
 
     BackHandler(enabled = screen != Screen.Home, onBack = goHome)
+
+    val update by UpdateManager.offer.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { UpdateManager.checkOnLaunch() }
+    update?.let { UpdateDialog(it) }
 
     Box(
         Modifier

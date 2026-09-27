@@ -5,6 +5,8 @@
     <!-- Internet is only used for Google Drive backup and restore. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Lets the in-app updater hand a downloaded update to Android's installer. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- USE_EXACT_ALARM is granted at install for alarm-clock apps on Android 13+. -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission
@@ -47,6 +49,16 @@
             android:showWhenLocked="true"
             android:taskAffinity=""
             android:turnScreenOn="true" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.updates"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/update_paths" />
+        </provider>
 
         <service
             android:name=".alarm.AlarmService"

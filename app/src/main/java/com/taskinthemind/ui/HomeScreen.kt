@@ -79,11 +79,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import com.taskinthemind.data.Task
 import com.taskinthemind.data.TaskList
 import com.taskinthemind.ui.theme.LocalStatusColors
 import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     tasks: List<Task>,
@@ -112,14 +119,24 @@ fun HomeScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { resumes++ }
     val needsSetup = remember(resumes) { AlarmPermissions.missingCritical(context) }
 
-    val visible = if (selectedList == null) tasks else tasks.filter { it.listId == selectedList }
     val listNames = lists.associate { it.id to it.name }
-    val upcoming = visible.filter { !it.done && it.triggerAt > now }
-    val overdue = visible.filter { !it.done && it.triggerAt <= now }
-    val done = visible.filter { it.done }.sortedByDescending { it.triggerAt }
 
-    val listState = rememberLazyListState()
-    val bottomFade by animateFloatAsState(if (listState.canScrollForward) 0.92f else 0f, tween(250), label = "fade")
+    // Tabs and pages stay in step: tapping a tab slides the pager, swiping selects the tab.
+    fun pageOf(id: Int?) = if (id == null) 0 else (lists.indexOfFirst { it.id == id } + 1).coerceAtLeast(0)
+    val pagerState = rememberPagerState(initialPage = pageOf(selectedList)) { lists.size + 1 }
+    val latestLists by rememberUpdatedState(lists)
+    val latestSelected by rememberUpdatedState(selectedList)
+    val latestOnSelect by rememberUpdatedState(onSelectList)
+    LaunchedEffect(selectedList, lists.size) {
+        val target = pageOf(selectedList)
+        if (pagerState.currentPage != target) pagerState.animateScrollToPage(target)
+    }
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }.collect { page ->
+            val id = if (page == 0) null else latestLists.getOrNull(page - 1)?.id
+            if (id != latestSelected) latestOnSelect(id)
+        }
+    }
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
@@ -145,115 +162,129 @@ fun HomeScreen(
                     }
                 }
         ListTabs(lists, selectedList, onSelectList, onCreateList, onRenameList, onDeleteList)
-        LazyColumn(
-            state = listState,
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 120.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                // Cards melt into the bottom edge while there is more list below;
-                // the fade lifts once the end is reached.
-                .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-                .drawWithContent {
-                    drawContent()
-                    if (bottomFade > 0f) {
-                        val h = 120.dp.toPx()
-                        drawRect(
-                            brush = Brush.verticalGradient(
-                                listOf(Color.Black, Color.Black.copy(alpha = 1f - bottomFade)),
-                                startY = size.height - h,
-                                endY = size.height
-                            ),
-                            topLeft = Offset(0f, size.height - h),
-                            size = Size(size.width, h),
-                            blendMode = BlendMode.DstIn
-                        )
-                    }
-                }
-        ) {
-            if (needsSetup) item {
-                WarmCard(
-                    background = scheme.primaryContainer,
-                    borderColor = scheme.primary.copy(alpha = 0.35f),
-                    padding = 14.dp,
-                    onClick = onOpenSettings
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = scheme.primary, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(12.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text("Alarms may not pop up", style = MaterialTheme.typography.titleSmall, color = scheme.onSurface)
-                            Text("Tap to allow what's needed in Settings", style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
-                        }
-                    }
-                }
-            }
+        // One page per tab: swipe sideways to move between All tasks and each list.
+        HorizontalPager(
+            state = pagerState,
+            key = { page -> if (page == 0) -1 else lists.getOrNull(page - 1)?.id ?: page },
+            modifier = Modifier.weight(1f).fillMaxWidth()
+        ) { page ->
+            val pageList = if (page == 0) null else lists.getOrNull(page - 1)?.id
+            val visible = if (pageList == null) tasks else tasks.filter { it.listId == pageList }
+            val upcoming = visible.filter { !it.done && it.triggerAt > now }
+            val overdue = visible.filter { !it.done && it.triggerAt <= now }
+            val done = visible.filter { it.done }.sortedByDescending { it.triggerAt }
+            val listState = rememberLazyListState()
+            val bottomFade by animateFloatAsState(if (listState.canScrollForward) 0.92f else 0f, tween(250), label = "fade")
 
-            if (tasks.isEmpty()) {
-                item { EmptyState(onRestore = onOpenSettings) }
-            } else if (visible.isEmpty()) {
-                item { ListEmpty(listNames[selectedList] ?: "this list") }
-            }
-
-            val row: @Composable (Task) -> Unit = { t ->
-                TaskRow(t, now, onOpenTask, onToggleDone, onLongPress = { menuFor = t.id }, tag = if (selectedList == null) t.listId?.let(listNames::get) else null) {
-                    TaskMenu(menuFor == t.id, t.done, onDismiss = { menuFor = null }, onToggleDone = { menuFor = null; onToggleDone(t) }) { menuFor = null; pendingDelete = t }
-                }
-            }
-            upcoming.firstOrNull()?.let { next ->
-                item(key = "next") {
-                    NextUpCard(next, now, onClick = { onOpenTask(next) }, onLongPress = { menuFor = next.id }) {
-                        TaskMenu(menuFor == next.id, next.done, onDismiss = { menuFor = null }, onToggleDone = { menuFor = null; onToggleDone(next) }) { menuFor = null; pendingDelete = next }
-                    }
-                }
-            }
-            if (upcoming.size > 1) {
-                item { SectionLabel("Later", Modifier.padding(top = 10.dp)) }
-                items(upcoming.drop(1), key = { it.id }) { row(it) }
-            }
-            if (overdue.isNotEmpty()) {
-                item { SectionLabel("Overdue", Modifier.padding(top = 10.dp)) }
-                items(overdue, key = { it.id }) { row(it) }
-            }
-            if (done.isNotEmpty()) {
-                item(key = "completed-header") {
-                    // A full, finger-sized ribbon (like Google Tasks) rather than a thin label.
-                    val turn by animateFloatAsState(if (showCompleted) 180f else 0f, tween(220), label = "chevron")
-                    WarmCard(
-                        background = scheme.surfaceVariant,
-                        padding = 0.dp,
-                        onClick = onToggleCompleted,
-                        modifier = Modifier.padding(top = 10.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 18.dp)
-                        ) {
-                            Icon(Icons.Outlined.TaskAlt, contentDescription = null, tint = scheme.primary, modifier = Modifier.size(20.dp))
-                            Spacer(Modifier.width(12.dp))
-                            Text("Completed tasks", style = MaterialTheme.typography.titleSmall, color = scheme.onSurface)
-                            Spacer(Modifier.width(8.dp))
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .background(scheme.surface, RoundedCornerShape(8.dp))
-                                    .border(1.dp, scheme.outline, RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 8.dp, vertical = 2.dp)
-                            ) {
-                                Text("${done.size}", style = MaterialTheme.typography.labelLarge, color = scheme.primary)
-                            }
-                            Spacer(Modifier.weight(1f))
-                            Icon(
-                                Icons.Outlined.ExpandMore,
-                                contentDescription = if (showCompleted) "Hide completed tasks" else "Show completed tasks",
-                                tint = scheme.onSurfaceVariant,
-                                modifier = Modifier.size(22.dp).rotate(turn)
+            LazyColumn(
+                state = listState,
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 120.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    // Cards melt into the bottom edge while there is more list below;
+                    // the fade lifts once the end is reached.
+                    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                    .drawWithContent {
+                        drawContent()
+                        if (bottomFade > 0f) {
+                            val h = 120.dp.toPx()
+                            drawRect(
+                                brush = Brush.verticalGradient(
+                                    listOf(Color.Black, Color.Black.copy(alpha = 1f - bottomFade)),
+                                    startY = size.height - h,
+                                    endY = size.height
+                                ),
+                                topLeft = Offset(0f, size.height - h),
+                                size = Size(size.width, h),
+                                blendMode = BlendMode.DstIn
                             )
                         }
                     }
+            ) {
+                if (needsSetup) item {
+                    WarmCard(
+                        background = scheme.primaryContainer,
+                        borderColor = scheme.primary.copy(alpha = 0.35f),
+                        padding = 14.dp,
+                        onClick = onOpenSettings
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = scheme.primary, modifier = Modifier.size(20.dp))
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("Alarms may not pop up", style = MaterialTheme.typography.titleSmall, color = scheme.onSurface)
+                                Text("Tap to allow what's needed in Settings", style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
+                            }
+                        }
+                    }
                 }
-                if (showCompleted) items(done, key = { it.id }) { row(it) }
+
+                if (tasks.isEmpty()) {
+                    item { EmptyState(onRestore = onOpenSettings) }
+                } else if (visible.isEmpty()) {
+                    item { ListEmpty(listNames[pageList] ?: "this list") }
+                }
+
+                val row: @Composable (Task) -> Unit = { t ->
+                    TaskRow(t, now, onOpenTask, onToggleDone, onLongPress = { menuFor = t.id }, tag = if (pageList == null) t.listId?.let(listNames::get) else null) {
+                        TaskMenu(menuFor == t.id, t.done, onDismiss = { menuFor = null }, onToggleDone = { menuFor = null; onToggleDone(t) }) { menuFor = null; pendingDelete = t }
+                    }
+                }
+                upcoming.firstOrNull()?.let { next ->
+                    item(key = "next") {
+                        NextUpCard(next, now, onClick = { onOpenTask(next) }, onLongPress = { menuFor = next.id }) {
+                            TaskMenu(menuFor == next.id, next.done, onDismiss = { menuFor = null }, onToggleDone = { menuFor = null; onToggleDone(next) }) { menuFor = null; pendingDelete = next }
+                        }
+                    }
+                }
+                if (upcoming.size > 1) {
+                    item { SectionLabel("Later", Modifier.padding(top = 10.dp)) }
+                    items(upcoming.drop(1), key = { it.id }) { row(it) }
+                }
+                if (overdue.isNotEmpty()) {
+                    item { SectionLabel("Overdue", Modifier.padding(top = 10.dp)) }
+                    items(overdue, key = { it.id }) { row(it) }
+                }
+                if (done.isNotEmpty()) {
+                    item(key = "completed-header") {
+                        // A full, finger-sized ribbon (like Google Tasks) rather than a thin label.
+                        val turn by animateFloatAsState(if (showCompleted) 180f else 0f, tween(220), label = "chevron")
+                        WarmCard(
+                            background = scheme.surfaceVariant,
+                            padding = 0.dp,
+                            onClick = onToggleCompleted,
+                            modifier = Modifier.padding(top = 10.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 18.dp)
+                            ) {
+                                Icon(Icons.Outlined.TaskAlt, contentDescription = null, tint = scheme.primary, modifier = Modifier.size(20.dp))
+                                Spacer(Modifier.width(12.dp))
+                                Text("Completed tasks", style = MaterialTheme.typography.titleSmall, color = scheme.onSurface)
+                                Spacer(Modifier.width(8.dp))
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .background(scheme.surface, RoundedCornerShape(8.dp))
+                                        .border(1.dp, scheme.outline, RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                                ) {
+                                    Text("${done.size}", style = MaterialTheme.typography.labelLarge, color = scheme.primary)
+                                }
+                                Spacer(Modifier.weight(1f))
+                                Icon(
+                                    Icons.Outlined.ExpandMore,
+                                    contentDescription = if (showCompleted) "Hide completed tasks" else "Show completed tasks",
+                                    tint = scheme.onSurfaceVariant,
+                                    modifier = Modifier.size(22.dp).rotate(turn)
+                                )
+                            }
+                        }
+                    }
+                    if (showCompleted) items(done, key = { it.id }) { row(it) }
+                }
             }
         }
         }
