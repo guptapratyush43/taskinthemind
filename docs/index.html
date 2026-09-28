@@ -14,22 +14,45 @@
 <meta name="twitter:title" content="Task in the Mind: tasks that ring like an alarm">
 <meta name="twitter:description" content="Tasks that ring like a real alarm, on any date and at any time, even a year ahead. Free for Android, no ads, no account.">
 <style>
-  :root { --bg:#FAF9F5; --card:#FFFFFF; --line:#DFDACD; --ink:#1F1E1D; --muted:#5C5A54; --accent:#C15F3C; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#1F1E1D; --card:#262624; --line:#413F3B; --ink:#F5F4EF; --muted:#B4B0A6; --accent:#D97757; } }
-  * { box-sizing:border-box } body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif }
-  main { max-width:640px; margin:0 auto; padding:48px 20px 64px }
+  :root { --bg:#FAF9F5; --card:#FFFFFF; --line:#DFDACD; --ink:#1F1E1D; --muted:#5C5A54; --accent:#C15F3C; --tint:rgba(193,95,60,.14); --tint2:rgba(193,95,60,.04); --edge:rgba(193,95,60,.35) }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1F1E1D; --card:#262624; --line:#413F3B; --ink:#F5F4EF; --muted:#B4B0A6; --accent:#D97757; --tint:rgba(217,119,87,.16); --tint2:rgba(217,119,87,.04); --edge:rgba(217,119,87,.35) } }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif }
+  main { max-width:680px; margin:0 auto; padding:48px 20px 56px }
   h1 { font-family:Georgia,"Times New Roman",serif; font-weight:400; font-size:40px; line-height:1.15; margin:18px 0 8px }
   .lead { color:var(--muted); font-size:18px; margin:0 0 28px }
   .icon { width:76px; height:76px; border-radius:22px; background:#F0EEE6; display:grid; place-items:center }
   .btn { display:inline-block; background:var(--accent); color:#fff; text-decoration:none; padding:14px 26px; border-radius:14px; font-weight:600 }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px 20px; margin:28px 0 }
-  .card h3 { margin:0 0 2px; font-size:15px } .card p { margin:0 0 14px; color:var(--muted); font-size:14px } .card p:last-child { margin:0 }
-  .hero { margin:28px 0 0; padding:20px 22px; border-radius:18px; background:linear-gradient(135deg, rgba(193,95,60,.14), rgba(193,95,60,.04)); border:1px solid rgba(193,95,60,.35) }
-  .hero .kicker { color:var(--accent); font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; margin:0 0 6px }
+  .sub { color:var(--muted); font-size:13px; margin:10px 0 0 }
+  a { color:var(--accent) }
+
+  /* Soft tinted panel shared by the highlight and the feature tiles */
+  .panel { border-radius:18px; background:linear-gradient(135deg, var(--tint), var(--tint2)); border:1px solid var(--edge) }
+  .hero { margin:28px 0 0; padding:20px 22px }
+  .kicker { color:var(--accent); font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; margin:0 0 6px }
   .hero h2 { font-family:Georgia,"Times New Roman",serif; font-weight:400; font-size:26px; line-height:1.25; margin:0 0 8px }
   .hero p { margin:0; color:var(--muted); font-size:15px }
-  .sub { color:var(--muted); font-size:13px; margin:10px 0 0 }
-  footer { color:var(--muted); font-size:13px; text-align:center } a { color:var(--accent) }
+
+  .section { margin:36px 0 12px }
+  .section h2 { font-family:Georgia,"Times New Roman",serif; font-weight:400; font-size:24px; margin:0 }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px }
+  @media (max-width:560px) { .grid { grid-template-columns:1fr } }
+  .tile { padding:16px 18px; display:flex; gap:14px; align-items:flex-start }
+  .tile.wide { grid-column:1 / -1 }
+  .badge { flex:none; width:40px; height:40px; border-radius:12px; background:var(--card); border:1px solid var(--edge); display:grid; place-items:center; color:var(--accent) }
+  .badge svg { width:20px; height:20px }
+  .tile h3 { margin:1px 0 4px; font-size:15px }
+  .tile ul { margin:0; padding:0; list-style:none; color:var(--muted); font-size:14px }
+  .tile li { position:relative; padding-left:14px; margin:2px 0 }
+  .tile li::before { content:""; position:absolute; left:0; top:.62em; width:6px; height:6px; border-radius:50%; background:var(--accent) }
+
+  /* Signature */
+  .made { margin:40px 0 18px; padding:22px; text-align:center; border-radius:18px; background:var(--card); border:1px solid var(--line) }
+  .made .by { font-family:Georgia,"Times New Roman",serif; font-size:20px; margin:0 0 6px }
+  .made .heart { color:var(--accent) }
+  .made p { margin:0; color:var(--muted); font-size:14px }
+  .mail { display:inline-flex; align-items:center; gap:8px; margin-top:14px; padding:10px 16px; border-radius:12px; border:1px solid var(--edge); background:var(--tint2); color:var(--accent); text-decoration:none; font-weight:600; font-size:14px; word-break:break-all }
+  footer { color:var(--muted); font-size:13px; text-align:center }
 </style>
 </head>
 <body>
@@ -48,23 +71,43 @@
   <a class="btn" href="https://github.com/guptapratyush43/taskinthemind/releases/latest">Download for Android</a>
   <p class="sub">Free · No ads · No account needed · Android 8+</p>
 
-  <div class="hero">
+  <div class="panel hero">
     <p class="kicker">Plan beyond this week</p>
     <h2>Any date. Any time.<br>Even a year ahead.</h2>
     <p>A regular alarm only looks a week ahead. Task in the Mind rings on the exact date you pick: next Tuesday, a friend's birthday, or a bill due next September.</p>
   </div>
 
-  <div class="card">
-    <h3>Rings, not pings</h3>
-    <p>Your chosen tone keeps ringing until you tap Got it. Hard to ignore, impossible to miss.</p>
-    <h3>Reschedule in a tap</h3>
-    <p>Push it 5, 10 or 15 minutes, or drag the clock hands to a new date and time.</p>
-    <h3>Lists that stay tidy</h3>
-    <p>Work, Gym, Groceries: swipe between lists and hold a tab to reorder.</p>
-    <h3>Safe in your Drive</h3>
-    <p>Optional backup to a private, hidden folder in your own Google Drive. New phone? Restore in a tap.</p>
-    <h3>Always up to date</h3>
-    <p>The app tells you when a new version is out. Update in a tap.</p>
+  <div class="section"><p class="kicker">Everything it does</p><h2>Small app, big memory</h2></div>
+  <div class="grid">
+    <div class="panel tile">
+      <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+      <div><h3>Rings, not pings</h3><ul><li>Your tone loops until you act</li><li>Full-screen on the lock screen</li><li>Strong, steady vibration</li></ul></div>
+    </div>
+    <div class="panel tile">
+      <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg></div>
+      <div><h3>Reschedule in a tap</h3><ul><li>5, 10 or 15 minutes later</li><li>Or drag the clock hands</li><li>Pick a new date too</li></ul></div>
+    </div>
+    <div class="panel tile">
+      <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg></div>
+      <div><h3>Lists that stay tidy</h3><ul><li>Work, Gym, Groceries, you name it</li><li>Swipe between lists</li><li>Hold a tab to reorder</li></ul></div>
+    </div>
+    <div class="panel tile">
+      <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-1.4-8.8A6 6 0 0 0 4.5 12.5 3.5 3.5 0 0 0 6 19z"/><path d="M9 14l2 2 4-4"/></svg></div>
+      <div><h3>Safe in your Drive</h3><ul><li>Private, hidden backup folder</li><li>Syncs after every change</li><li>New phone? Restore in a tap</li></ul></div>
+    </div>
+    <div class="panel tile wide">
+      <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg></div>
+      <div><h3>Always up to date</h3><ul><li>The app tells you when a new version is out, and updates in a tap. Your tasks stay put.</li></ul></div>
+    </div>
+  </div>
+
+  <div class="made">
+    <p class="by">Made with <span class="heart">&#9829;</span> by Pratyush Gupta</p>
+    <p>Spotted a bug or have an idea for the app? I'd love to hear it.</p>
+    <a class="mail" href="mailto:guptapratyush43@gmail.com?subject=Task%20in%20the%20Mind%20feedback">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+      guptapratyush43@gmail.com
+    </a>
   </div>
 
   <footer><a href="privacy.html">Privacy policy</a> · <a href="https://github.com/guptapratyush43/taskinthemind">Source on GitHub</a></footer>
