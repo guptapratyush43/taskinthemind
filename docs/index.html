@@ -36,16 +36,13 @@
 
   .section { margin:36px 0 12px }
   .section h2 { font-family:Georgia,"Times New Roman",serif; font-weight:400; font-size:24px; margin:0 }
-  .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px }
-  @media (max-width:560px) { .grid { grid-template-columns:1fr } }
-  .tile { padding:16px 18px; display:flex; gap:14px; align-items:flex-start }
-  .tile.wide { grid-column:1 / -1 }
+  .list { padding:6px 20px }
+  .row { display:flex; gap:14px; align-items:center; padding:14px 0 }
+  .row + .row { border-top:1px solid var(--edge) }
   .badge { flex:none; width:40px; height:40px; border-radius:12px; background:var(--card); border:1px solid var(--edge); display:grid; place-items:center; color:var(--accent) }
   .badge svg { width:20px; height:20px }
-  .tile h3 { margin:1px 0 4px; font-size:15px }
-  .tile ul { margin:0; padding:0; list-style:none; color:var(--muted); font-size:14px }
-  .tile li { position:relative; padding-left:14px; margin:2px 0 }
-  .tile li::before { content:""; position:absolute; left:0; top:.62em; width:6px; height:6px; border-radius:50%; background:var(--accent) }
+  .row h3 { margin:0 0 1px; font-size:15px }
+  .row p { margin:0; color:var(--muted); font-size:14px; line-height:1.45 }
 
   /* Signature */
   .made { margin:40px 0 18px; padding:22px; text-align:center; border-radius:18px; background:var(--card); border:1px solid var(--line) }
@@ -79,27 +76,12 @@
   </div>
 
   <div class="section"><p class="kicker">Everything it does</p><h2>Small app, big memory</h2></div>
-  <div class="grid">
-    <div class="panel tile">
-      <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
-      <div><h3>Rings, not pings</h3><ul><li>Your tone loops until you act</li><li>Full-screen on the lock screen</li><li>Strong, steady vibration</li></ul></div>
-    </div>
-    <div class="panel tile">
-      <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg></div>
-      <div><h3>Reschedule in a tap</h3><ul><li>5, 10 or 15 minutes later</li><li>Or drag the clock hands</li><li>Pick a new date too</li></ul></div>
-    </div>
-    <div class="panel tile">
-      <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg></div>
-      <div><h3>Lists that stay tidy</h3><ul><li>Work, Gym, Groceries, you name it</li><li>Swipe between lists</li><li>Hold a tab to reorder</li></ul></div>
-    </div>
-    <div class="panel tile">
-      <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-1.4-8.8A6 6 0 0 0 4.5 12.5 3.5 3.5 0 0 0 6 19z"/><path d="M9 14l2 2 4-4"/></svg></div>
-      <div><h3>Safe in your Drive</h3><ul><li>Private, hidden backup folder</li><li>Syncs after every change</li><li>New phone? Restore in a tap</li></ul></div>
-    </div>
-    <div class="panel tile wide">
-      <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg></div>
-      <div><h3>Always up to date</h3><ul><li>The app tells you when a new version is out, and updates in a tap. Your tasks stay put.</li></ul></div>
-    </div>
+  <div class="panel list">
+    <div class="row"><div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div><div><h3>Rings, not pings</h3><p>Your tone loops until you tap Got it, even on the lock screen.</p></div></div>
+    <div class="row"><div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg></div><div><h3>Reschedule in a tap</h3><p>5, 10 or 15 minutes later, or drag the clock to a new date and time.</p></div></div>
+    <div class="row"><div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg></div><div><h3>Lists that stay tidy</h3><p>Work, Gym, Groceries. Swipe between them, hold a tab to reorder.</p></div></div>
+    <div class="row"><div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-1.4-8.8A6 6 0 0 0 4.5 12.5 3.5 3.5 0 0 0 6 19z"/><path d="M9 14l2 2 4-4"/></svg></div><div><h3>Safe in your Drive</h3><p>Private backup to your own Google Drive. New phone? Restore in a tap.</p></div></div>
+    <div class="row"><div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg></div><div><h3>Always up to date</h3><p>The app tells you when a new version is out.</p></div></div>
   </div>
 
   <div class="made">
